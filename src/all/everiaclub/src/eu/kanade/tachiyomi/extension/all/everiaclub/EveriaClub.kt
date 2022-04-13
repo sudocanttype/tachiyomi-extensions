@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.everiaclub
 
+import android.util.Log
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -77,7 +78,7 @@ class EveriaClub() : ParsedHttpSource() {
         chapter.setUrlWithoutDomain(element.select("meta[property=\"og:url\"]").attr("abs:content"))
         chapter.chapter_number = 0F
         chapter.name = element.select(".entry-title").text()
-        chapter.date_upload = SimpleDateFormat("yyyy-MM-DD", Locale.US).parse(element.select("meta[property=\"article:published_time\"]").attr("abs:content").substringBeforeLast("T").substringAfterLast("/"))?.time ?: 0L
+        chapter.date_upload = SimpleDateFormat("yyyy/MM/DD", Locale.US).parse(getDate(element.select("link[rel=\"canonical\"]").attr("href"))) ?.time ?: 0L
         return chapter
     }
 
@@ -109,4 +110,11 @@ class EveriaClub() : ParsedHttpSource() {
     class TagFilter : Filter.Text("Tag")
 
     private inline fun <reified T> Iterable<*>.findInstance() = find { it is T } as? T
+
+    private fun getDate(str: String): String {
+        // At this point, this works with every everiaclub doc
+        val regex = "[0-9]{4}\\/[0-9]{2}\\/[0-9]{2}".toRegex()
+        val match = regex.find(str)
+        return match!!.value
+    }
 }

@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.all.everiaclub
 
-import android.util.Log
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -64,7 +63,7 @@ class EveriaClub() : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
         manga.title = document.select(".entry-title").text()
-        manga.description = document.select(".entry-content").text().trim()
+        manga.description = document.select(".entry-title").text()
         val genres = mutableListOf<String>()
         document.select(".nv-tags-list > a").forEach {
             genres.add(it.text())
@@ -75,7 +74,7 @@ class EveriaClub() : ParsedHttpSource() {
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
-        chapter.setUrlWithoutDomain(element.select("meta[property=\"og:url\"]").attr("abs:content"))
+        chapter.setUrlWithoutDomain(element.select("link[rel=\"canonical\"]").attr("href"))
         chapter.chapter_number = 0F
         chapter.name = element.select(".entry-title").text()
         chapter.date_upload = SimpleDateFormat("yyyy/MM/DD", Locale.US).parse(getDate(element.select("link[rel=\"canonical\"]").attr("href"))) ?.time ?: 0L
@@ -88,8 +87,8 @@ class EveriaClub() : ParsedHttpSource() {
 
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
-        document.select(".entry-content img").forEachIndexed { i, it ->
-            val itUrl = it.attr("abs:src")
+        document.select(".wp-block-gallery img").forEachIndexed { i, it ->
+            val itUrl = it.attr("src")
             pages.add(Page(i, itUrl, itUrl))
         }
         return pages
@@ -112,7 +111,7 @@ class EveriaClub() : ParsedHttpSource() {
     private inline fun <reified T> Iterable<*>.findInstance() = find { it is T } as? T
 
     private fun getDate(str: String): String {
-        // At this point, this works with every everiaclub doc
+        // At this point(4/12/22), this works with every everiaclub doc
         val regex = "[0-9]{4}\\/[0-9]{2}\\/[0-9]{2}".toRegex()
         val match = regex.find(str)
         return match!!.value
